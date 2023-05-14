@@ -65,3 +65,8 @@ dummy-variable-rgx = "^(_+|(_+[a-zA-Z0-9_]*[a-zA-Z0-9]+?))$"
 
 [tool.ruff.mccabe]
 max-complexity = 10
+
+[tool.pytest.ini_options]
+pythonpath = [
+  "."
+]

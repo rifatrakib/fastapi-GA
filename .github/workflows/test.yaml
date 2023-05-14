@@ -1,0 +1,29 @@
+name: Automated Tests
+
+on:
+  pull_request
+
+jobs:
+  pytest:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v3
+    - name: Setup Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.9'
+    - name: Install Dependencies
+      run: |
+        python -m pip install --upgrade pip
+        pip install poetry
+        poetry export --without-hashes --format=requirements.txt > requirements.txt
+    - name: Run Tests
+      run: |
+        coverage run -m pytest
+        coverage report
+        coverage xml
+    - name: Get Coverage Report
+      uses: pytest-action/pytest@v2
+      with:
+        args: --cov-report=xml
