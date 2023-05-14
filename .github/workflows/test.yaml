@@ -18,10 +18,12 @@ jobs:
         python -m pip install --upgrade pip
         pip install poetry
         poetry export --without-hashes --format=requirements.txt > requirements.txt
-    - name: Run tests with coverage
-      run: pytest --cov=server/ tests/
-    - name: Generate coverage report
-      uses: actions/upload-artifact@v2
+    - name: Test with pytest
+      run: |
+        coverage run -m pytest
+        coverage report
+        coverage xml
+    - name: Get Coverage report
+      uses: orgoro/coverage@v3
       with:
-        name: coverage-report
-        path: htmlcov/
+        coverageFile: coverage.xml
