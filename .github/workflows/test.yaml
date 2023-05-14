@@ -19,6 +19,11 @@ jobs:
         pip install poetry
         poetry export --without-hashes --format=requirements.txt > requirements.txt
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
+    - name: Create env variable
+      working-directory: .
+      run: |
+        with open('.env', 'w', encoding='utf-8') as env:
+          env.write("APP_NAME=Sample API\n")
     - name: Test with pytest
       run: |
         coverage run -m pytest
