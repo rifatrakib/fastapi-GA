@@ -1,10 +1,10 @@
-from decouple import config
 from fastapi import FastAPI
+
+from server.config.factory import settings
 
 app = FastAPI()
 
 
 @app.get("/health")
 async def health():
-    app_name = config("APP_NAME")
-    return {"status": "ok", "app_name": app_name}
+    return {"status": "ok", "app_name": settings.APP_NAME}
