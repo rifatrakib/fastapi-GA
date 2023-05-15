@@ -3,6 +3,9 @@ name: Automated Tests
 on:
   pull_request
 
+env:
+  MODE: production
+
 jobs:
   pytest:
     runs-on: ubuntu-latest
