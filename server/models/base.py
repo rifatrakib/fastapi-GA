@@ -1,5 +1,7 @@
 from datetime import datetime
+from typing import Union
 
+from beanie import Document
 from pydantic import BaseModel
 from sqlmodel import Field, SQLModel
 
@@ -16,3 +18,13 @@ class BaseModelConfig(BaseModel):
 
 class BaseSQLTable(SQLModel, BaseModelConfig):
     id: int = Field(index=True, primary_key=True)
+
+
+class BaseDocumentModel(Document, BaseModelConfig):
+    created_at: datetime = Field(default_factory=datetime.utcnow)
+    last_updated_at: Union[datetime, None] = Field(default=None)
+
+    async def save(self):
+        if self.id:
+            self.last_updated_at = datetime.utcnow()
+        return await super().save()
