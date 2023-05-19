@@ -20,6 +20,9 @@ class BaseConfig(RootConfig):
     RDS_PASS: Union[str, None] = Field(default=None)
     RDS_NAME: Union[str, None] = Field(default=None)
 
+    # MongoDB Configurations
+    MONGO_URI: str
+
     class Config:
         env_file = "configurations/.env"
 
