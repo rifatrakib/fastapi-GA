@@ -22,3 +22,15 @@ class BaseConfig(RootConfig):
 
     class Config:
         env_file = "configurations/.env"
+
+    @property
+    def RDS_URI(self) -> str:
+        username = self.RDS_USER
+        password = self.RDS_PASS
+        host = self.RDS_HOST
+        port = self.RDS_PORT
+        db_name = self.RDS_NAME
+
+        if not all([username, password, host, port, db_name]):
+            return "sqlite:///database.db"
+        return f"postgresql://{username}:{password}@{host}:{port}/{db_name}"
