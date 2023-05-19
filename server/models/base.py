@@ -1,8 +1,9 @@
 from datetime import datetime
-from typing import Union
+from importlib import import_module
+from typing import List, Union
 
 from beanie import Document
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 from sqlmodel import Field, SQLModel
 
 from server.utils.formatters import format_datetime_into_isoformat
@@ -28,3 +29,19 @@ class BaseDocumentModel(Document, BaseModelConfig):
         if self.id:
             self.last_updated_at = datetime.utcnow()
         return await super().save()
+
+
+class MapperSchema(BaseModel):
+    database_name: str
+    model_paths: List[str]
+
+    @validator("model_paths")
+    def validate_model_paths(cls, value):
+        for path in value:
+            try:
+                module_name, class_name = path.rsplit(".", 1)
+                module = import_module(module_name)
+                _ = getattr(module, class_name)
+            except (ValueError, ImportError, AttributeError):
+                raise ValueError(f"Invalid class path: {path}")
+        return value
