@@ -1,6 +1,7 @@
 from datetime import datetime
 
 from pydantic import BaseModel
+from sqlmodel import Field, SQLModel
 
 from server.utils.formatters import format_datetime_into_isoformat
 
@@ -11,3 +12,7 @@ class BaseModelConfig(BaseModel):
         validate_assignment = True
         allow_population_by_field_name: bool = True
         json_encoders: dict = {datetime: format_datetime_into_isoformat}
+
+
+class BaseSQLTable(SQLModel, BaseModelConfig):
+    id: int = Field(index=True, primary_key=True)
