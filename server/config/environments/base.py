@@ -23,6 +23,10 @@ class BaseConfig(RootConfig):
     # MongoDB Configurations
     MONGO_URI: str
 
+    # Cache Servers Configurations
+    REDIS_HOST: str
+    REDIS_PORT: int
+
     class Config:
         env_file = "configurations/.env"
 

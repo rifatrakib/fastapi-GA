@@ -9,9 +9,16 @@ services:
     working_dir: /server
     command: uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
-      - .env
+      - configurations/.env
     volumes:
       - .:/server
     ports:
       - "8000:8000"
+    restart: on-failure
+
+  redis:
+    container_name: redis
+    image: redis:latest
+    ports:
+      - "6379:6379"
     restart: on-failure

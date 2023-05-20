@@ -1,7 +1,7 @@
 from fastapi import FastAPI
 
 from server.config.factory import settings
-from server.models.managers import create_db_and_tables, pool_database_clients
+from server.models.managers import create_db_and_tables, ping_redis_server, pool_database_clients
 
 app = FastAPI()
 
@@ -17,6 +17,10 @@ async def on_startup():
     print("Pooling NoSQL database connections...")
     await pool_database_clients()
     print("NoSQL database connections pooled!")
+
+    print("Ping Redis server...")
+    ping_redis_server()
+    print("Redis server pinged!")
 
     print("Startup complete!")
 

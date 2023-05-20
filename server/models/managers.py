@@ -3,6 +3,7 @@ from typing import List
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
 from pydantic import parse_obj_as
+from redis import Redis
 from sqlmodel import create_engine
 
 from server.config.factory import settings
@@ -41,3 +42,12 @@ async def pool_database_clients():
             database=client[mapper.database_name],
             document_models=mapper.model_paths,
         )
+
+
+def get_redis_client():
+    return Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
+
+
+def ping_redis_server():
+    client = get_redis_client()
+    return client.ping()
