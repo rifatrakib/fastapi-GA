@@ -18,6 +18,9 @@ coverage = "^7.2.5"
 python-decouple = "^3.8"
 psycopg2 = "^2.9.6"
 redis = "^4.5.5"
+pydash = "^7.0.3"
+python-jose = {extras = ["cryptography"], version = "^3.3.0"}
+passlib = {extras = ["bcrypt"], version = "^1.7.4"}
 
 [tool.poetry.group.dev.dependencies]
 pre-commit = "^3.3.1"
