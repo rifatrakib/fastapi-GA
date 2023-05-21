@@ -4,7 +4,7 @@ from server.schemas.base import BaseRequestSchema
 from server.schemas.common.users import UserBase
 
 
-class SignupSchema(BaseRequestSchema, UserBase):
+class SignupRequestSchema(BaseRequestSchema, UserBase):
     password: str = Field(
         title="password",
         decription="""
