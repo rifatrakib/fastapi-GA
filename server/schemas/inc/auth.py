@@ -16,3 +16,18 @@ class SignupRequestSchema(BaseRequestSchema, UserBase):
         min_length=8,
         max_length=64,
     )
+
+
+class LoginRequestSchema(BaseRequestSchema):
+    username: str = Field(
+        title="username",
+        description="Username of the user to login.",
+        min_length=1,
+        max_length=64,
+    )
+    password: str = Field(
+        title="password",
+        description="Password of the user to login.",
+        min_length=1,
+        max_length=64,
+    )
