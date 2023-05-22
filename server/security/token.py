@@ -13,12 +13,20 @@ def create_jwt(data: UserAccount, expires_delta: Union[datetime, None] = None) -
     expires_delta = expires_delta if expires_delta else timedelta(minutes=settings.JWT_MIN)
     expire = datetime.utcnow() + expires_delta
     to_encode = TokenData(**data.dict(), exp=expire, sub=settings.JWT_SUBJECT)
-    return jwt.encode(to_encode.dict(), key=settings.JWT_SECRET, algorithm=settings.JWT_ALGORITHM)
+    return jwt.encode(
+        to_encode.dict(),
+        key=settings.JWT_SECRET_KEY,
+        algorithm=settings.JWT_ALGORITHM,
+    )
 
 
 def decode_jwt(token: str) -> TokenUser:
     try:
-        payload = jwt.decode(token=token, key=settings.JWT_SECRET, algorithms=[settings.JWT_ALGORITHM])
+        payload = jwt.decode(
+            token=token,
+            key=settings.JWT_SECRET_KEY,
+            algorithms=[settings.JWT_ALGORITHM],
+        )
         user_data = TokenUser(
             id=payload.get("id"),
             username=payload.get("username"),
