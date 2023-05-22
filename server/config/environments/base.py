@@ -27,6 +27,14 @@ class BaseConfig(RootConfig):
     REDIS_HOST: str
     REDIS_PORT: int
 
+    # JWT Configurations
+    JWT_SECRET_KEY: str
+    JWT_SUBJECT: str
+    JWT_ALGORITHM: str
+    JWT_MIN: int
+    JWT_HOUR: int
+    JWT_DAY: int
+
     class Config:
         env_file = "configurations/.env"
 
