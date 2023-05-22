@@ -23,3 +23,9 @@ class BaseResponseSchema(BaseAPISchema):
     @validator("id", pre=True)
     def convert_id(cls, v):
         return str(v) if v else None
+
+
+class HealthResponseSchema(BaseResponseSchema):
+    APP_NAME: str
+    MODE: str
+    DEBUG: bool

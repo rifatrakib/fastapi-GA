@@ -3,6 +3,7 @@ from fastapi import FastAPI
 from server.config.factory import settings
 from server.models.managers import create_db_and_tables, ping_redis_server, pool_database_clients
 from server.routes.auth import router as auth_router
+from server.schemas.base import HealthResponseSchema
 
 app = FastAPI()
 app.include_router(auth_router)
@@ -27,6 +28,6 @@ async def on_startup():
     print("Startup complete!")
 
 
-@app.get("/health")
+@app.get("/health", response_model=HealthResponseSchema)
 async def health():
-    return {"status": "ok", "app_name": settings.APP_NAME}
+    return settings
