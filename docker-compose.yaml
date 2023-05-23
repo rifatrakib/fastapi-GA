@@ -9,7 +9,7 @@ services:
     working_dir: /server
     command: uvicorn server.main:app --host 0.0.0.0 --port 8000 --reload
     env_file:
-      - configurations/.env
+      - configurations/.env.staging
     volumes:
       - .:/server
     ports:
@@ -26,15 +26,25 @@ services:
   rds:
     container_name: postgresql
     image: postgres:latest
-    environment:
-      - POSTGRES_USER=postgres
-      - POSTGRES_PASSWORD=postgres
-      - POSTGRES_DB=fastapi_ga_db
+    env_file:
+      - configurations/.env.staging
     volumes:
       - pgdata:/var/lib/postgresql/data/
     ports:
       - "5432:5432"
     restart: on-failure
 
+  nosql:
+    container_name: mongodb
+    image: mongo:latest
+    env_file:
+      - configurations/.env.staging
+    volumes:
+      - mongodbdata:/data/db
+    ports:
+      - "27017:27017"
+    restart: on-failure
+
 volumes:
   pgdata:
+  mongodbdata:
