@@ -28,8 +28,13 @@ def run_containers(show_logs: bool = True):
 
 
 @app.command(name="stop-containers")
-def stop_containers():
-    subprocess.run("docker compose down", shell=True)
+def stop_containers(drop_volumes: bool = False):
+    command = "docker compose down"
+
+    if drop_volumes:
+        command = f"{command} --volumes"
+
+    subprocess.run(command, shell=True)
 
 
 if __name__ == "__main__":
