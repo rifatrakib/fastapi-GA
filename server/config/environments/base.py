@@ -1,6 +1,6 @@
 from typing import Union
 
-from pydantic import BaseSettings, Extra, Field
+from pydantic import BaseSettings, EmailStr, Extra, Field
 
 
 class RootConfig(BaseSettings):
@@ -34,6 +34,17 @@ class BaseConfig(RootConfig):
     JWT_MIN: int
     JWT_HOUR: int
     JWT_DAY: int
+
+    # SMTP Configurations
+    MAIL_USERNAME: Union[EmailStr, str]
+    MAIL_PASSWORD: str
+    MAIL_FROM: EmailStr
+    MAIL_PORT: int
+    MAIL_SERVER: str
+    MAIL_FROM_NAME: str
+    MAIL_STARTTLS: bool
+    MAIL_SSL_TLS: bool
+    USE_CREDENTIALS: bool
 
     class Config:
         env_file = "configurations/.env"
