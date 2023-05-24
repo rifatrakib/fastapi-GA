@@ -14,11 +14,11 @@ class BaseConfig(RootConfig):
     APP_NAME: str
 
     # SQL Database Configurations
-    RDS_HOST: Union[str, None] = Field(default=None)
-    RDS_PORT: Union[str, None] = Field(default=None)
-    RDS_USER: Union[str, None] = Field(default=None)
-    RDS_PASS: Union[str, None] = Field(default=None)
-    RDS_NAME: Union[str, None] = Field(default=None)
+    POSTGRES_HOST: Union[str, None] = Field(default=None)
+    POSTGRES_PORT: Union[str, None] = Field(default=None)
+    POSTGRES_USER: Union[str, None] = Field(default=None)
+    POSTGRES_PASSWORD: Union[str, None] = Field(default=None)
+    POSTGRES_DB: Union[str, None] = Field(default=None)
 
     # MongoDB Configurations
     MONGO_URI: str
@@ -40,11 +40,11 @@ class BaseConfig(RootConfig):
 
     @property
     def RDS_URI(self) -> str:
-        username = self.RDS_USER
-        password = self.RDS_PASS
-        host = self.RDS_HOST
-        port = self.RDS_PORT
-        db_name = self.RDS_NAME
+        username = self.POSTGRES_USER
+        password = self.POSTGRES_PASSWORD
+        host = self.POSTGRES_HOST
+        port = self.POSTGRES_PORT
+        db_name = self.POSTGRES_DB
 
         if not all([username, password, host, port, db_name]):
             return "sqlite:///database.db"
