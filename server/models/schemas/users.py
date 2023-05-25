@@ -9,5 +9,5 @@ class UserAccount(BaseSQLTable, table=True):
     username: str = Field(..., index=True, unique=True)
     email: str = Field(..., index=True, unique=True)
     hashed_password: str = Field(...)
-    is_active: bool = Field(default=True)
+    is_active: bool = Field(default=False)
     is_superuser: bool = Field(default=False)

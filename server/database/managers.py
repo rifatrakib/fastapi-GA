@@ -1,4 +1,5 @@
-from typing import List
+from functools import lru_cache
+from typing import Any, List, Union
 
 from beanie import init_beanie
 from motor.motor_asyncio import AsyncIOMotorClient
@@ -44,10 +45,16 @@ async def pool_database_clients():
         )
 
 
-def get_redis_client():
+@lru_cache()
+def get_redis_client() -> Redis:
     return Redis(host=settings.REDIS_HOST, port=settings.REDIS_PORT)
 
 
 def ping_redis_server():
-    client = get_redis_client()
+    client: Redis = get_redis_client()
     return client.ping()
+
+
+def cache_data(*, key: str, data: Any, ttl: Union[int, None] = None):
+    client: Redis = get_redis_client()
+    client.set(key, data, ex=ttl)

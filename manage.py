@@ -37,5 +37,11 @@ def stop_containers(drop_volumes: bool = False):
     subprocess.run(command, shell=True)
 
 
+@app.command(name="rebuild-api-image")
+def rebuild_api_image():
+    subprocess.run("docker build . -t fastapi-ga-api", shell=True)
+    subprocess.run('docker image prune --force --filter "dangling=true"', shell=True)
+
+
 if __name__ == "__main__":
     app()
