@@ -24,7 +24,7 @@ class TokenData(TokenUser):
     )
 
 
-class SignupResponseSchema(BaseModel):
+class TokenResponseSchema(BaseModel):
     access_token: str = Field(
         title="access token",
         decription="A string for access token as per OAuth2.0 requirements.",

@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any, List, Union
 
 from pydantic import BaseModel, Extra, validator
 
@@ -29,3 +29,9 @@ class HealthResponseSchema(BaseResponseSchema):
     APP_NAME: str
     MODE: str
     DEBUG: bool
+
+
+class MessageResponseSchema(BaseResponseSchema):
+    loc: Union[List[str], None] = None
+    msg: str
+    type: Union[str, None] = None
