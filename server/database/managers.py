@@ -1,3 +1,4 @@
+import json
 from functools import lru_cache
 from typing import Any, List, Union
 
@@ -58,3 +59,10 @@ def ping_redis_server():
 def cache_data(*, key: str, data: Any, ttl: Union[int, None] = None):
     client: Redis = get_redis_client()
     client.set(key, data, ex=ttl)
+
+
+def get_cached_data(*, key: str):
+    client: Redis = get_redis_client()
+    data = json.loads(client.get(key).decode("utf-8"))
+    client.delete(key)
+    return data
