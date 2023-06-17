@@ -1,6 +1,7 @@
-from fastapi import APIRouter, BackgroundTasks, Request, status
+from fastapi import APIRouter, BackgroundTasks, HTTPException, Request, status
 
-from server.database.users.auth import authenticate_user, create_user_account
+from server.database.managers import get_cached_data
+from server.database.users.auth import activate_user_account, authenticate_user, create_user_account
 from server.schemas.base import MessageResponseSchema
 from server.schemas.inc.auth import LoginRequestSchema, SignupRequestSchema
 from server.schemas.out.auth import TokenResponseSchema
@@ -32,6 +33,22 @@ async def register(payload: SignupRequestSchema, request: Request, task_queue: B
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def login(payload: LoginRequestSchema):
-    user = authenticate_user(payload.username, payload.password)
-    token = create_jwt(user)
-    return {"access_token": token, "token_type": "Bearer"}
+    try:
+        user = authenticate_user(payload.username, payload.password)
+        token = create_jwt(user)
+        return {"access_token": token, "token_type": "Bearer"}
+    except HTTPException as e:
+        raise e
+
+
+@router.get(
+    "/activate/{token}",
+    summary="Activate user account",
+    description="Activate a user account.",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def activate_account(token: str):
+    user = get_cached_data(key=token)
+    updated_user = activate_user_account(user["user_id"])
+    return {"msg": f"User account {updated_user.username} activated."}
