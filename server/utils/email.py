@@ -58,7 +58,7 @@ async def send_activation_mail(
     user: UserAccount,
 ) -> None:
     key = generate_account_validation_token()
-    url = f"{request.base_url}auth/activate/{key}"
+    url = f"{request.base_url}auth/activate?key={key}"
     context = {
         "request": request,
         "subject": "Activate your account",
