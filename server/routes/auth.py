@@ -1,8 +1,20 @@
-from fastapi import APIRouter, BackgroundTasks, Depends, HTTPException, Query, Request, status
+from fastapi import (
+    APIRouter,
+    BackgroundTasks,
+    Depends,
+    HTTPException,
+    Query,
+    Request,
+    status,
+)
 from sqlalchemy.orm import Session
 
 from server.database.managers import get_cached_data
-from server.database.users.auth import activate_user_account, authenticate_user, create_user_account
+from server.database.users.auth import (
+    activate_user_account,
+    authenticate_user,
+    create_user_account,
+)
 from server.schemas.base import MessageResponseSchema
 from server.schemas.inc.auth import LoginRequestSchema, SignupRequestSchema
 from server.schemas.out.auth import TokenResponseSchema
@@ -27,7 +39,7 @@ async def register(
     payload: SignupRequestSchema,
     session: Session = Depends(get_database_session),
 ) -> MessageResponseSchema:
-    new_user = create_user_account(session=session, payload=payload)
+    new_user = await create_user_account(session=session, payload=payload)
     task_queue.add_task(send_activation_mail, request, new_user)
     return {"msg": "User account created. Check your email to activate your account."}
 
@@ -44,7 +56,7 @@ async def login(
     session: Session = Depends(get_database_session),
 ) -> TokenResponseSchema:
     try:
-        user = authenticate_user(
+        user = await authenticate_user(
             session=session,
             username=payload.username,
             password=payload.password,
@@ -68,5 +80,5 @@ async def activate_account(
     session: Session = Depends(get_database_session),
 ) -> MessageResponseSchema:
     user = get_cached_data(key=token)
-    updated_user = activate_user_account(session=session, user_id=user["user_id"])
+    updated_user = await activate_user_account(session=session, user_id=user["user_id"])
     return {"msg": f"User account {updated_user.username} activated."}
