@@ -50,13 +50,15 @@ class BaseConfig(RootConfig):
         env_file = "configurations/.env"
 
     @property
-    def RDS_URI(self) -> str:
+    def RDS_URI_SYNC(self) -> str:
         username = self.POSTGRES_USER
         password = self.POSTGRES_PASSWORD
         host = self.POSTGRES_HOST
         port = self.POSTGRES_PORT
         db_name = self.POSTGRES_DB
-
-        if not all([username, password, host, port, db_name]):
-            return "sqlite:///database.db"
         return f"postgresql://{username}:{password}@{host}:{port}/{db_name}"
+
+    @property
+    def RDS_URI(self) -> str:
+        uri = self.RDS_URI_SYNC
+        return uri.replace("postgresql://", "postgresql+asyncpg://")

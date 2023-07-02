@@ -1,12 +1,17 @@
-from sqlmodel import Session, select
+from sqlalchemy.ext.asyncio import AsyncSession
+from sqlmodel import select
 
 from server.models.schemas.users import UserAccount
 from server.schemas.inc.auth import SignupRequestSchema
 from server.security.authentication import pwd_context
-from server.utils.messages import raise_401_unauthorized, raise_403_forbidden, raise_404_not_found
+from server.utils.messages import (
+    raise_401_unauthorized,
+    raise_403_forbidden,
+    raise_404_not_found,
+)
 
 
-def create_user_account(session: Session, payload: SignupRequestSchema) -> UserAccount:
+async def create_user_account(session: AsyncSession, payload: SignupRequestSchema) -> UserAccount:
     hashed_password = pwd_context.hash_plain_password(payload.password)
     user = UserAccount(
         username=payload.username,
@@ -15,14 +20,16 @@ def create_user_account(session: Session, payload: SignupRequestSchema) -> UserA
     )
 
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
 
     return user
 
 
-def authenticate_user(session: Session, username: str, password: str) -> UserAccount:
-    user = session.exec(select(UserAccount).where(UserAccount.username == username)).first()
+async def authenticate_user(session: AsyncSession, username: str, password: str) -> UserAccount:
+    stmt = select(UserAccount).where(UserAccount.username == username)
+    query = await session.execute(stmt)
+    user = query.scalar()
 
     if not user:
         raise_404_not_found(message=f"The username {username} is not registered.")
@@ -36,10 +43,10 @@ def authenticate_user(session: Session, username: str, password: str) -> UserAcc
     return user
 
 
-def activate_user_account(session: Session, user_id: int) -> UserAccount:
-    user = session.get(UserAccount, user_id)
+async def activate_user_account(session: AsyncSession, user_id: int) -> UserAccount:
+    user = await session.get(UserAccount, user_id)
     user.is_active = True
     session.add(user)
-    session.commit()
-    session.refresh(user)
+    await session.commit()
+    await session.refresh(user)
     return user
