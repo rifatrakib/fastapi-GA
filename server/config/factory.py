@@ -5,7 +5,6 @@ from decouple import config
 from server.config.environments.base import BaseConfig
 from server.config.environments.development import DevelopmentConfig
 from server.config.environments.production import ProductionConfig
-from server.config.environments.sqlite_test import SQLiteTestConfig
 from server.config.environments.staging import StagingConfig
 
 
@@ -18,8 +17,6 @@ class SettingsFactory:
             return StagingConfig()
         elif self.mode == "production":
             return ProductionConfig()
-        elif self.mode == "sqlite-test":  # pragma: no cover
-            return SQLiteTestConfig()
         else:  # pragma: no cover
             return DevelopmentConfig()
 
