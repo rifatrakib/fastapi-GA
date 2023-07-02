@@ -68,7 +68,7 @@ async def send_activation_mail(
 
     cache_data(
         key=key,
-        data=json.dumps({"user_id": str(user.id)}),
+        data=json.dumps({"user_id": user.id}),
         ttl=timedelta(minutes=5).seconds,
     )
 
@@ -78,4 +78,3 @@ async def send_activation_mail(
         subject="Activate your account",
         template_name="activation.html",
     )
-    print(f"Activation email sent to {user.email}")
