@@ -1,3 +1,4 @@
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
@@ -49,4 +50,15 @@ async def activate_user_account(session: AsyncSession, user_id: int) -> UserAcco
     session.add(user)
     await session.commit()
     await session.refresh(user)
+    return user
+
+
+async def read_user_by_email(session: AsyncSession, email: EmailStr) -> UserAccount:
+    stmt = select(UserAccount).where(UserAccount.email == email)
+    query = await session.execute(stmt)
+    user = query.scalar()
+
+    if not user:
+        raise_404_not_found(message=f"The email {email} is not registered.")
+
     return user
