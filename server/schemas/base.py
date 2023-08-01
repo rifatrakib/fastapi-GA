@@ -25,7 +25,7 @@ class BaseResponseSchema(BaseAPISchema):
         return str(v) if v else None
 
 
-class HealthResponseSchema(BaseResponseSchema):
+class HealthResponseSchema(BaseAPISchema):
     APP_NAME: str
     MODE: str
     DEBUG: bool
