@@ -7,6 +7,7 @@ from fastapi import (
     Request,
     status,
 )
+from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from server.database.managers import get_cached_data
@@ -17,13 +18,14 @@ from server.database.users.auth import (
     read_user_by_email,
 )
 from server.schemas.base import MessageResponseSchema
-from server.schemas.inc.auth import (
-    ActivationResendRequestSchema,
-    LoginRequestSchema,
-    SignupRequestSchema,
-)
+from server.schemas.inc.auth import LoginRequestSchema, SignupRequestSchema
 from server.schemas.out.auth import TokenResponseSchema
-from server.security.dependencies import get_database_session
+from server.security.dependencies import (
+    email_form_field,
+    get_database_session,
+    login_form,
+    signup_form,
+)
 from server.security.token import create_jwt
 from server.utils.email import send_activation_mail
 from server.utils.enums import Tags
@@ -41,7 +43,7 @@ router = APIRouter(prefix="/auth", tags=[Tags.authentication])
 async def register(
     request: Request,
     task_queue: BackgroundTasks,
-    payload: SignupRequestSchema,
+    payload: SignupRequestSchema = Depends(signup_form),
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
     new_user = await create_user_account(session=session, payload=payload)
@@ -57,7 +59,7 @@ async def register(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def login(
-    payload: LoginRequestSchema,
+    payload: LoginRequestSchema = Depends(login_form),
     session: AsyncSession = Depends(get_database_session),
 ) -> TokenResponseSchema:
     try:
@@ -99,11 +101,11 @@ async def activate_account(
 async def resend_activation_key(
     request: Request,
     task_queue: BackgroundTasks,
-    payload: ActivationResendRequestSchema,
+    email: EmailStr = Depends(email_form_field),
     session: AsyncSession = Depends(get_database_session),
 ):
     try:
-        user = await read_user_by_email(session=session, email=payload.email)
+        user = await read_user_by_email(session=session, email=email)
         task_queue.add_task(send_activation_mail, request, user)
         return {"msg": "Activation key sent."}
     except HTTPException as e:
