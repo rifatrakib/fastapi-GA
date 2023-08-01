@@ -1,4 +1,4 @@
-from pydantic import EmailStr, Field
+from pydantic import Field
 
 from server.schemas.base import BaseRequestSchema
 from server.schemas.common.users import UserBase
@@ -30,11 +30,4 @@ class LoginRequestSchema(BaseRequestSchema):
         description="Password of the user to login.",
         min_length=1,
         max_length=64,
-    )
-
-
-class ActivationResendRequestSchema(BaseRequestSchema):
-    email: EmailStr = Field(
-        title="email",
-        decription="Unique email that can be used for user account activation.",
     )
