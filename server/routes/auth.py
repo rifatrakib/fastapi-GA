@@ -16,14 +16,21 @@ from server.database.users.auth import (
     authenticate_user,
     create_user_account,
     read_user_by_email,
+    update_password,
 )
 from server.schemas.base import MessageResponseSchema
-from server.schemas.inc.auth import LoginRequestSchema, SignupRequestSchema
-from server.schemas.out.auth import TokenResponseSchema
+from server.schemas.inc.auth import (
+    LoginRequestSchema,
+    PasswordChangeRequestSchema,
+    SignupRequestSchema,
+)
+from server.schemas.out.auth import TokenResponseSchema, TokenUser
 from server.security.dependencies import (
     email_form_field,
     get_database_session,
+    is_user_active,
     login_form,
+    password_change_request_form,
     signup_form,
 )
 from server.security.token import create_jwt
@@ -108,5 +115,24 @@ async def resend_activation_key(
         user = await read_user_by_email(session=session, email=email)
         task_queue.add_task(send_activation_mail, request, user)
         return {"msg": "Activation key sent."}
+    except HTTPException as e:
+        raise e
+
+
+@router.patch(
+    "/password/change",
+    summary="Change user password",
+    description="Change a user's password.",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def change_password(
+    user: TokenUser = Depends(is_user_active),
+    payload: PasswordChangeRequestSchema = Depends(password_change_request_form),
+    session: AsyncSession = Depends(get_database_session),
+) -> MessageResponseSchema:
+    try:
+        await update_password(session=session, user_id=user.id, payload=payload)
+        return {"msg": "Password changed."}
     except HTTPException as e:
         raise e
