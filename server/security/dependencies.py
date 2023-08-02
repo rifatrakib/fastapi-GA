@@ -1,10 +1,19 @@
-from fastapi import Depends, Form
+from fastapi import Depends, Form, HTTPException, status
+from fastapi.security import OAuth2PasswordBearer
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from server.config.factory import settings
-from server.schemas.inc.auth import LoginRequestSchema, SignupRequestSchema
+from server.schemas.inc.auth import (
+    LoginRequestSchema,
+    PasswordChangeRequestSchema,
+    SignupRequestSchema,
+)
+from server.schemas.out.auth import TokenUser
+from server.security.token import decode_jwt
+
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
 def get_async_database_session():
@@ -20,6 +29,20 @@ async def get_database_session() -> AsyncSession:
         yield session
     finally:
         await session.close()
+
+
+async def is_user_active(
+    token: str = Depends(oauth2_scheme),
+) -> TokenUser:
+    try:
+        user_data: TokenUser = decode_jwt(token)
+        return user_data
+    except ValueError:
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid token",
+            headers={"WWW-Authenticate": "Bearer"},
+        )
 
 
 def username_form_field(
@@ -44,20 +67,62 @@ def email_form_field(
 
 def password_form_field(
     password: str = Form(
-        title="password",
-        description="Password of the user to login.",
-        min_length=1,
+        alias="password",
+        title="Password",
+        decription="""
+            Password containing at least 1 uppercase letter, 1 lowercase letter,
+            1 number, 1 character that is neither letter nor number, and
+            between 8 to 64 characters.
+        """.replace("\n", " ").strip(),
+        regex=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,64}$",
+        min_length=8,
         max_length=64,
+        example="Admin@12345",
     )
 ):
     return password
+
+
+def repeat_password_form_field(
+    repeat_password: str = Form(
+        alias="repeatPassword",
+        title="Repeat password",
+        description="Repeat password to confirm password.",
+        example="Admin@12345",
+    ),
+) -> str:
+    return repeat_password
+
+
+def new_password_form_field(
+    new_password: str = Form(
+        alias="newPassword",
+        title="New password",
+        decription="""
+            Password containing at least 1 uppercase letter, 1 lowercase letter,
+            1 number, 1 character that is neither letter nor number, and
+            between 8 to 64 characters.
+        """.replace("\n", " ").strip(),
+        regex=r"^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[^\w\s]).{8,64}$",
+        min_length=8,
+        max_length=64,
+        example="Admin@12345",
+    )
+) -> str:
+    return new_password
 
 
 def signup_form(
     username: str = Depends(username_form_field),
     email: EmailStr = Depends(email_form_field),
     password: str = Depends(password_form_field),
+    repeat_password: str = Depends(repeat_password_form_field),
 ):
+    if password != repeat_password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Passwords do not match.",
+        )
     return SignupRequestSchema(username=username, email=email, password=password)
 
 
@@ -66,3 +131,16 @@ def login_form(
     password: str = Depends(password_form_field),
 ):
     return LoginRequestSchema(username=username, password=password)
+
+
+def password_change_request_form(
+    current_password: str = Depends(password_form_field),
+    new_password: str = Depends(new_password_form_field),
+    repeat_password: str = Depends(repeat_password_form_field),
+):
+    if new_password != repeat_password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Passwords do not match.",
+        )
+    return PasswordChangeRequestSchema(current_password=current_password, new_password=new_password)
