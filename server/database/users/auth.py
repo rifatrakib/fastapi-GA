@@ -3,7 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlmodel import select
 
 from server.models.schemas.users import UserAccount
-from server.schemas.inc.auth import SignupRequestSchema
+from server.schemas.inc.auth import PasswordChangeRequestSchema, SignupRequestSchema
 from server.security.authentication import pwd_context
 from server.utils.messages import (
     raise_401_unauthorized,
@@ -62,3 +62,21 @@ async def read_user_by_email(session: AsyncSession, email: EmailStr) -> UserAcco
         raise_404_not_found(message=f"The email {email} is not registered.")
 
     return user
+
+
+async def update_password(
+    session: AsyncSession,
+    user_id: int,
+    payload: PasswordChangeRequestSchema,
+):
+    stmt = select(UserAccount).where(UserAccount.id == user_id)
+    query = await session.execute(stmt)
+    user = query.scalar()
+
+    if not pwd_context.verify_password(payload.current_password, user.hashed_password):
+        raise raise_401_unauthorized(message="Incorrect password.")
+
+    user.hashed_password = pwd_context.hash_plain_password(payload.new_password)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
