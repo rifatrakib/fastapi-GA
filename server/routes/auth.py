@@ -36,6 +36,7 @@ from server.security.dependencies import (
 from server.security.token import create_jwt
 from server.utils.email import send_activation_mail
 from server.utils.enums import Tags
+from server.utils.generators import create_temporary_activation_url
 
 router = APIRouter(prefix="/auth", tags=[Tags.authentication])
 
@@ -134,5 +135,25 @@ async def change_password(
     try:
         await update_password(session=session, user_id=user.id, payload=payload)
         return {"msg": "Password changed."}
+    except HTTPException as e:
+        raise e
+
+
+@router.post(
+    "/password/forgot",
+    summary="Forgot password",
+    description="Send password reset link to user.",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def forgot_password(
+    request: Request,
+    email: EmailStr = Depends(email_form_field),
+    session: AsyncSession = Depends(get_database_session),
+) -> MessageResponseSchema:
+    try:
+        user = await read_user_by_email(session=session, email=email)
+        url = create_temporary_activation_url(user, f"{request.base_url}auth/password/reset")
+        return {"msg": f"Activation key resent. Activate your account using {url}."}
     except HTTPException as e:
         raise e
