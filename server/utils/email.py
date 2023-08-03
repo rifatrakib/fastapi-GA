@@ -1,16 +1,13 @@
-import json
-from datetime import timedelta
 from typing import Any, Dict, List
 
 from fastapi import Request
 from fastapi.templating import Jinja2Templates
 from fastapi_mail import ConnectionConfig, FastMail, MessageSchema, MessageType
-from pydantic import EmailStr
+from pydantic import EmailStr, HttpUrl
 
 from server.config.smtp import config_smtp_server, config_templates
-from server.database.managers import cache_data
 from server.models.schemas.users import UserAccount
-from server.utils.generators import generate_account_validation_token
+from server.utils.generators import create_temporary_activation_url
 
 
 def build_mail_body(context: Dict[str, Any], template_name: str) -> str:
@@ -55,22 +52,16 @@ async def send_mail(
 
 async def send_activation_mail(
     request: Request,
+    url: HttpUrl,
     user: UserAccount,
 ) -> None:
-    key = generate_account_validation_token()
-    url = f"{request.base_url}auth/activate?key={key}"
+    url = create_temporary_activation_url(user=user, url=url)
     context = {
         "request": request,
         "subject": "Activate your account",
         "url": url,
         "username": user.username,
     }
-
-    cache_data(
-        key=key,
-        data=json.dumps({"user_id": user.id}),
-        ttl=timedelta(minutes=5).seconds,
-    )
 
     await send_mail(
         context=context,
