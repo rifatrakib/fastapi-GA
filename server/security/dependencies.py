@@ -16,7 +16,7 @@ from server.security.token import decode_jwt
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
 
-def get_async_database_session():
+def get_async_database_session() -> AsyncSession:
     url = settings.RDS_URI
     engine = create_async_engine(url)
     SessionLocal = sessionmaker(engine, expire_on_commit=False, class_=AsyncSession)
@@ -52,7 +52,7 @@ def username_form_field(
         min_length=1,
         max_length=64,
     ),
-):
+) -> str:
     return username
 
 
@@ -61,7 +61,7 @@ def email_form_field(
         title="email",
         decription="Unique email that can be used for user account activation.",
     ),
-):
+) -> EmailStr:
     return email
 
 
@@ -79,7 +79,7 @@ def password_form_field(
         max_length=64,
         example="Admin@12345",
     )
-):
+) -> str:
     return password
 
 
@@ -117,7 +117,7 @@ def signup_form(
     email: EmailStr = Depends(email_form_field),
     password: str = Depends(password_form_field),
     repeat_password: str = Depends(repeat_password_form_field),
-):
+) -> SignupRequestSchema:
     if password != repeat_password:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
@@ -129,7 +129,7 @@ def signup_form(
 def login_form(
     username: str = Depends(username_form_field),
     password: str = Depends(password_form_field),
-):
+) -> LoginRequestSchema:
     return LoginRequestSchema(username=username, password=password)
 
 
@@ -137,10 +137,22 @@ def password_change_request_form(
     current_password: str = Depends(password_form_field),
     new_password: str = Depends(new_password_form_field),
     repeat_password: str = Depends(repeat_password_form_field),
-):
+) -> PasswordChangeRequestSchema:
     if new_password != repeat_password:
         raise HTTPException(
             status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
             detail="Passwords do not match.",
         )
     return PasswordChangeRequestSchema(current_password=current_password, new_password=new_password)
+
+
+def password_reset_request_form(
+    new_password: str = Depends(new_password_form_field),
+    repeat_password: str = Depends(repeat_password_form_field),
+) -> str:
+    if new_password != repeat_password:
+        raise HTTPException(
+            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
+            detail="Passwords do not match.",
+        )
+    return new_password
