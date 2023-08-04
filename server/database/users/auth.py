@@ -80,3 +80,18 @@ async def update_password(
     session.add(user)
     await session.commit()
     await session.refresh(user)
+
+
+async def reset_password(
+    session: AsyncSession,
+    user_id: int,
+    new_password: str,
+):
+    stmt = select(UserAccount).where(UserAccount.id == user_id)
+    query = await session.execute(stmt)
+    user = query.scalar()
+
+    user.hashed_password = pwd_context.hash_plain_password(new_password)
+    session.add(user)
+    await session.commit()
+    await session.refresh(user)
