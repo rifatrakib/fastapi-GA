@@ -57,7 +57,17 @@ async def register(
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
     new_user = await create_user_account(session=session, payload=payload)
-    task_queue.add_task(send_activation_mail, request, new_user)
+    url = create_temporary_activation_url(new_user, f"{request.base_url}auth/activate")
+
+    task_queue.add_task(
+        send_activation_mail,
+        request,
+        f"Account activation for {new_user.username}",
+        "activation",
+        url,
+        new_user,
+    )
+
     return {"msg": "User account created. Check your email to activate your account."}
 
 
@@ -150,12 +160,23 @@ async def change_password(
 )
 async def forgot_password(
     request: Request,
+    task_queue: BackgroundTasks,
     email: EmailStr = Depends(email_form_field),
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
     try:
         user = await read_user_by_email(session=session, email=email)
         url = create_temporary_activation_url(user, f"{request.base_url}auth/password/reset")
+
+        task_queue.add_task(
+            send_activation_mail,
+            request,
+            f"Password reset requested by {user.username}",
+            "password-reset",
+            url,
+            user,
+        )
+
         return {"msg": f"Activation key resent. Activate your account using {url}."}
     except HTTPException as e:
         raise e
