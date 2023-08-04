@@ -16,6 +16,7 @@ from server.database.users.auth import (
     authenticate_user,
     create_user_account,
     read_user_by_email,
+    reset_password,
     update_password,
 )
 from server.schemas.base import MessageResponseSchema
@@ -31,6 +32,7 @@ from server.security.dependencies import (
     is_user_active,
     login_form,
     password_change_request_form,
+    password_reset_request_form,
     signup_form,
 )
 from server.security.token import create_jwt
@@ -55,7 +57,17 @@ async def register(
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
     new_user = await create_user_account(session=session, payload=payload)
-    task_queue.add_task(send_activation_mail, request, new_user)
+    url = create_temporary_activation_url(new_user, f"{request.base_url}auth/activate")
+
+    task_queue.add_task(
+        send_activation_mail,
+        request,
+        f"Account activation for {new_user.username}",
+        "activation",
+        url,
+        new_user,
+    )
+
     return {"msg": "User account created. Check your email to activate your account."}
 
 
@@ -148,12 +160,51 @@ async def change_password(
 )
 async def forgot_password(
     request: Request,
+    task_queue: BackgroundTasks,
     email: EmailStr = Depends(email_form_field),
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
     try:
         user = await read_user_by_email(session=session, email=email)
         url = create_temporary_activation_url(user, f"{request.base_url}auth/password/reset")
+
+        task_queue.add_task(
+            send_activation_mail,
+            request,
+            f"Password reset requested by {user.username}",
+            "password-reset",
+            url,
+            user,
+        )
+
         return {"msg": f"Activation key resent. Activate your account using {url}."}
+    except HTTPException as e:
+        raise e
+
+
+@router.patch(
+    "/password/reset",
+    name="account:reset-password",
+    summary="Use secret key sent in mail to verify and reset password",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def reset_user_password(
+    validation_key: str = Query(
+        ...,
+        title="Validation key",
+        description="Validation key included as query parameter in the link sent to user email.",
+    ),
+    new_password: str = Depends(password_reset_request_form),
+    session: AsyncSession = Depends(get_database_session),
+):
+    try:
+        user = get_cached_data(key=validation_key)
+        await reset_password(
+            session=session,
+            account_id=user["account_id"],
+            new_password=new_password,
+        )
+        return MessageResponseSchema(msg="Password was reset successfully!")
     except HTTPException as e:
         raise e

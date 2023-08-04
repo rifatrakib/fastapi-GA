@@ -52,13 +52,15 @@ async def send_mail(
 
 async def send_activation_mail(
     request: Request,
+    subject: str,
+    template: str,
     url: HttpUrl,
     user: UserAccount,
 ) -> None:
     url = create_temporary_activation_url(user=user, url=url)
     context = {
         "request": request,
-        "subject": "Activate your account",
+        "subject": subject,
         "url": url,
         "username": user.username,
     }
@@ -66,6 +68,6 @@ async def send_activation_mail(
     await send_mail(
         context=context,
         recipients=[user.email],
-        subject="Activate your account",
-        template_name="activation.html",
+        subject=subject,
+        template_name=f"{template}.html",
     )
