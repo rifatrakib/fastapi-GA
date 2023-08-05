@@ -17,6 +17,7 @@ from server.database.users.auth import (
     create_user_account,
     read_user_by_email,
     reset_password,
+    update_email,
     update_password,
 )
 from server.schemas.base import MessageResponseSchema
@@ -177,7 +178,7 @@ async def forgot_password(
             user,
         )
 
-        return {"msg": f"Activation key resent. Activate your account using {url}."}
+        return {"msg": "Please check your email for the temporary password reset link."}
     except HTTPException as e:
         raise e
 
@@ -206,5 +207,66 @@ async def reset_user_password(
             new_password=new_password,
         )
         return MessageResponseSchema(msg="Password was reset successfully!")
+    except HTTPException as e:
+        raise e
+
+
+@router.post(
+    "/update/email",
+    summary="Request email change",
+    description="Send email change link to user.",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_200_OK,
+)
+async def request_email_change(
+    request: Request,
+    task_queue: BackgroundTasks,
+    user: TokenUser = Depends(is_user_active),
+    new_email: EmailStr = Depends(email_form_field),
+) -> MessageResponseSchema:
+    try:
+        url = create_temporary_activation_url(
+            user,
+            f"{request.base_url}auth/update/email",
+            extras={"new_email": new_email},
+        )
+
+        task_queue.add_task(
+            send_activation_mail,
+            request,
+            f"Change email requested by {user.username}",
+            "change-email",
+            url,
+            user,
+        )
+
+        return {"msg": "Please check your email for the temporary email change link."}
+    except HTTPException as e:
+        raise e
+
+
+@router.patch(
+    "/update/email",
+    summary="Change user email",
+    description="Change a user's email.",
+    response_model=MessageResponseSchema,
+    status_code=status.HTTP_202_ACCEPTED,
+)
+async def change_user_email(
+    validation_key: str = Query(
+        ...,
+        title="Validation key",
+        description="Validation key included as query parameter in the link sent to user email.",
+    ),
+    session: AsyncSession = Depends(get_database_session),
+):
+    try:
+        user = get_cached_data(key=validation_key)
+        await update_email(
+            session=session,
+            account_id=user["account_id"],
+            new_email=user["new_email"],
+        )
+        return MessageResponseSchema(msg="Email was changed successfully!")
     except HTTPException as e:
         raise e
