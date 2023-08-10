@@ -15,3 +15,9 @@ async def read_product_by_id(product_id: str) -> ProductDocument:
     if not product:
         raise raise_404_not_found("Product not found")
     return product
+
+
+async def update_product_by_id(product_id: str, product: ProductRequest) -> ProductDocument:
+    existing_product = await read_product_by_id(product_id)
+    updated_product = await ProductDocument(**{**existing_product.dict(), **product.dict(exclude_unset=True)}).save()
+    return updated_product
