@@ -2,6 +2,7 @@ from fastapi import APIRouter, HTTPException, status
 
 from server.database.products.crud import (
     create_product,
+    delete_product_by_id,
     read_product_by_id,
     update_product_by_id,
 )
@@ -48,5 +49,18 @@ async def create_single_product(product: ProductRequest):
 async def update_single_product(product_id: str, product: ProductRequest):
     try:
         return await update_product_by_id(product_id, product)
+    except HTTPException as e:
+        raise e
+
+
+@router.delete(
+    "/{product_id}",
+    summary="Delete a single product",
+    description="Delete a single product by its ID",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_single_product(product_id: str):
+    try:
+        await delete_product_by_id(product_id)
     except HTTPException as e:
         raise e

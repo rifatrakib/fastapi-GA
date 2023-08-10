@@ -21,3 +21,9 @@ async def update_product_by_id(product_id: str, product: ProductRequest) -> Prod
     existing_product = await read_product_by_id(product_id)
     updated_product = await ProductDocument(**{**existing_product.dict(), **product.dict(exclude_unset=True)}).save()
     return updated_product
+
+
+async def delete_product_by_id(product_id: str) -> ProductDocument:
+    product = await read_product_by_id(product_id)
+    await product.delete()
+    return product
