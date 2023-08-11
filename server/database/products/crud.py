@@ -1,3 +1,5 @@
+from typing import List
+
 from beanie import PydanticObjectId
 
 from server.models.documents.products import ProductDocument
@@ -15,6 +17,11 @@ async def read_product_by_id(product_id: str) -> ProductDocument:
     if not product:
         raise raise_404_not_found("Product not found")
     return product
+
+
+async def read_products(page: int, limit: int = 10) -> List[ProductDocument]:
+    products = await ProductDocument.find().skip((page - 1) * limit).limit(limit).to_list()
+    return products
 
 
 async def update_product_by_id(product_id: str, product: ProductRequest) -> ProductDocument:

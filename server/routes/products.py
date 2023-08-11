@@ -1,9 +1,12 @@
-from fastapi import APIRouter, HTTPException, status
+from typing import List
+
+from fastapi import APIRouter, HTTPException, Query, status
 
 from server.database.products.crud import (
     create_product,
     delete_product_by_id,
     read_product_by_id,
+    read_products,
     update_product_by_id,
 )
 from server.schemas.inc.products import ProductRequest, ProductUpdateRequest
@@ -23,6 +26,19 @@ router = APIRouter(prefix="/products", tags=[Tags.products])
 async def read_single_product(product_id: str):
     try:
         return await read_product_by_id(product_id)
+    except HTTPException as e:
+        raise e
+
+
+@router.get(
+    "",
+    summary="Get multiple products",
+    description="Get all products with pagination.",
+    response_model=List[ProductResponse],
+)
+async def paginate_products(page: int = Query(1, ge=1)):
+    try:
+        return await read_products(page)
     except HTTPException as e:
         raise e
 
