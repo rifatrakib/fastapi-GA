@@ -23,7 +23,5 @@ async def update_product_by_id(product_id: str, product: ProductRequest) -> Prod
     return updated_product
 
 
-async def delete_product_by_id(product_id: str) -> ProductDocument:
-    product = await read_product_by_id(product_id)
-    await product.delete()
-    return product
+async def delete_product_by_id(product_id: str):
+    await ProductDocument.find_one(ProductDocument.id == PydanticObjectId(product_id)).delete()

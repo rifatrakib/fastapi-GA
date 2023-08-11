@@ -6,9 +6,10 @@ from server.database.products.crud import (
     read_product_by_id,
     update_product_by_id,
 )
-from server.schemas.inc.products import ProductRequest
+from server.schemas.inc.products import ProductRequest, ProductUpdateRequest
 from server.schemas.out.products import ProductResponse
 from server.utils.enums import Tags
+from server.utils.messages import raise_400_bad_request
 
 router = APIRouter(prefix="/products", tags=[Tags.products])
 
@@ -46,8 +47,10 @@ async def create_single_product(product: ProductRequest):
     description="Update a single product by its ID",
     response_model=ProductResponse,
 )
-async def update_single_product(product_id: str, product: ProductRequest):
+async def update_single_product(product_id: str, product: ProductUpdateRequest):
     try:
+        if not product.dict(exclude_unset=True):
+            raise raise_400_bad_request("No fields to update.")
         return await update_product_by_id(product_id, product)
     except HTTPException as e:
         raise e
