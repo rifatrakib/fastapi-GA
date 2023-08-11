@@ -1,13 +1,8 @@
-from pydantic import Field
-
 from server.models.base import BaseDocumentModel
+from server.schemas.common.products import ProductBase
 
 
-class ProductDocument(BaseDocumentModel):
-    name: str = Field(..., title="Product name")
-    description: str = Field(..., title="Product description")
-    price: float = Field(..., title="Product price")
-
+class ProductDocument(BaseDocumentModel, ProductBase):
     class Settings:
         name = "products"
         indexes = ["name"]

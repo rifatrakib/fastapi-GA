@@ -1,6 +1,13 @@
 from fastapi import HTTPException, status
 
 
+def raise_400_bad_request(message: str = "Bad request") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        detail={"msg": message},
+    )
+
+
 def raise_401_unauthorized(message: str = "Not authorized") -> HTTPException:
     return HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,

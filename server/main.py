@@ -1,12 +1,18 @@
 from fastapi import FastAPI
 
 from server.config.factory import settings
-from server.database.managers import create_db_and_tables, ping_redis_server, pool_database_clients
+from server.database.managers import (
+    create_db_and_tables,
+    ping_redis_server,
+    pool_database_clients,
+)
 from server.routes.auth import router as auth_router
+from server.routes.products import router as products_router
 from server.schemas.base import HealthResponseSchema
 
 app = FastAPI()
 app.include_router(auth_router)
+app.include_router(products_router)
 
 
 @app.on_event("startup")
