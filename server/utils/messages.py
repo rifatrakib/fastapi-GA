@@ -27,3 +27,10 @@ def raise_404_not_found(message: str = "Not found") -> HTTPException:
         status_code=status.HTTP_404_NOT_FOUND,
         detail={"msg": message},
     )
+
+
+def raise_410_gone(message: str = "Gone") -> HTTPException:
+    return HTTPException(
+        status_code=status.HTTP_410_GONE,
+        detail={"msg": message},
+    )

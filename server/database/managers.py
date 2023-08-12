@@ -11,6 +11,7 @@ from sqlmodel import create_engine
 from server.config.factory import settings
 from server.models.base import MapperSchema
 from server.models.schemas.users import BaseSQLTable as UserTables
+from server.utils.messages import raise_410_gone
 
 
 def create_db_and_tables():
@@ -57,7 +58,15 @@ def cache_data(*, key: str, data: Any, ttl: Union[int, None] = None):
 
 
 def get_cached_data(*, key: str):
+    try:
+        client: Redis = get_redis_client()
+        data = json.loads(client.get(key).decode("utf-8"))
+        client.delete(key)
+        return data
+    except AttributeError:
+        raise raise_410_gone(message="Key has expired!")
+
+
+def validate_key(*, key: str):
     client: Redis = get_redis_client()
-    data = json.loads(client.get(key).decode("utf-8"))
-    client.delete(key)
-    return data
+    return client.exists(key)
