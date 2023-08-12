@@ -10,7 +10,7 @@ from fastapi import (
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from server.database.managers import get_cached_data
+from server.database.managers import get_cached_data, validate_key
 from server.database.users.auth import (
     activate_user_account,
     authenticate_user,
@@ -40,6 +40,7 @@ from server.security.token import create_jwt
 from server.utils.email import send_activation_mail
 from server.utils.enums import Tags
 from server.utils.generators import create_temporary_activation_url
+from server.utils.messages import raise_410_gone
 
 router = APIRouter(prefix="/auth", tags=[Tags.authentication])
 
@@ -183,10 +184,30 @@ async def forgot_password(
         raise e
 
 
+@router.options(
+    "/password/reset",
+    summary="Validate password reset link",
+    description="Validate password reset link.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def validate_password_reset_link(
+    validation_key: str = Query(
+        ...,
+        title="Validation key",
+        description="Validation key included as query parameter in the link sent to user email.",
+    ),
+):
+    try:
+        if not validate_key(key=validation_key):
+            raise raise_410_gone(message="Link expired!")
+    except HTTPException as e:
+        raise e
+
+
 @router.patch(
     "/password/reset",
-    name="account:reset-password",
-    summary="Use secret key sent in mail to verify and reset password",
+    summary="Verify email and reset password",
+    description="Use secret key sent in mail to verify and reset password.",
     response_model=MessageResponseSchema,
     status_code=status.HTTP_202_ACCEPTED,
 )
@@ -241,6 +262,26 @@ async def request_email_change(
         )
 
         return {"msg": "Please check your email for the temporary email change link."}
+    except HTTPException as e:
+        raise e
+
+
+@router.options(
+    "/update/email",
+    summary="Validate email change link",
+    description="Validate email change link.",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def validate_email_change_link(
+    validation_key: str = Query(
+        ...,
+        title="Validation key",
+        description="Validation key included as query parameter in the link sent to user email.",
+    ),
+):
+    try:
+        if not validate_key(key=validation_key):
+            raise raise_410_gone(message="Link expired!")
     except HTTPException as e:
         raise e
 
