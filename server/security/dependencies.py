@@ -1,4 +1,4 @@
-from fastapi import Depends, Form, HTTPException, status
+from fastapi import Depends, Form, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
@@ -43,6 +43,16 @@ async def is_user_active(
             detail="Invalid token",
             headers={"WWW-Authenticate": "Bearer"},
         )
+
+
+def temporary_url_key(
+    validation_key: str = Query(
+        ...,
+        title="Validation key",
+        description="Validation key included as query parameter in the link sent to user email.",
+    ),
+) -> str:
+    return validation_key
 
 
 def username_form_field(

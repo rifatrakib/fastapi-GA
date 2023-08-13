@@ -35,6 +35,7 @@ from server.security.dependencies import (
     password_change_request_form,
     password_reset_request_form,
     signup_form,
+    temporary_url_key,
 )
 from server.security.token import create_jwt
 from server.utils.email import send_activation_mail
@@ -105,10 +106,10 @@ async def login(
     status_code=status.HTTP_200_OK,
 )
 async def activate_account(
-    token: str = Query(title="Activation token", description="Activation token sent to user email."),
+    validation_key: str = Depends(temporary_url_key),
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
-    user = get_cached_data(key=token)
+    user = get_cached_data(key=validation_key)
     updated_user = await activate_user_account(session=session, user_id=user["user_id"])
     return {"msg": f"User account {updated_user.username} activated."}
 
@@ -212,11 +213,7 @@ async def validate_password_reset_link(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def reset_user_password(
-    validation_key: str = Query(
-        ...,
-        title="Validation key",
-        description="Validation key included as query parameter in the link sent to user email.",
-    ),
+    validation_key: str = Depends(temporary_url_key),
     new_password: str = Depends(password_reset_request_form),
     session: AsyncSession = Depends(get_database_session),
 ):
@@ -272,13 +269,7 @@ async def request_email_change(
     description="Validate email change link.",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def validate_email_change_link(
-    validation_key: str = Query(
-        ...,
-        title="Validation key",
-        description="Validation key included as query parameter in the link sent to user email.",
-    ),
-):
+async def validate_email_change_link(validation_key: str = Depends(temporary_url_key)):
     try:
         if not validate_key(key=validation_key):
             raise raise_410_gone(message="Link expired!")
@@ -294,11 +285,7 @@ async def validate_email_change_link(
     status_code=status.HTTP_202_ACCEPTED,
 )
 async def change_user_email(
-    validation_key: str = Query(
-        ...,
-        title="Validation key",
-        description="Validation key included as query parameter in the link sent to user email.",
-    ),
+    validation_key: str = Depends(temporary_url_key),
     session: AsyncSession = Depends(get_database_session),
 ):
     try:
