@@ -33,13 +33,13 @@ async def authenticate_user(session: AsyncSession, username: str, password: str)
     user = query.scalar()
 
     if not user:
-        raise_404_not_found(message=f"The username {username} is not registered.")
+        raise raise_404_not_found(message=f"The username {username} is not registered.")
 
     if not user.is_active:
-        raise_403_forbidden(message=f"The account for username {username} is not activated.")
+        raise raise_403_forbidden(message=f"The account for username {username} is not activated.")
 
     if not pwd_context.verify_password(password, user.hashed_password):
-        raise_401_unauthorized(message="Incorrect password.")
+        raise raise_401_unauthorized(message="Incorrect password.")
 
     return user
 
@@ -59,7 +59,7 @@ async def read_user_by_email(session: AsyncSession, email: EmailStr) -> UserAcco
     user = query.scalar()
 
     if not user:
-        raise_404_not_found(message=f"The email {email} is not registered.")
+        raise raise_404_not_found(message=f"The email {email} is not registered.")
 
     return user
 
@@ -110,3 +110,14 @@ async def update_email(
     session.add(user)
     await session.commit()
     await session.refresh(user)
+
+
+async def read_user_by_user_id(session: AsyncSession, user_id: int) -> UserAccount:
+    stmt = select(UserAccount).where(UserAccount.id == user_id)
+    query = await session.execute(stmt)
+    user = query.scalar()
+
+    if not user:
+        raise raise_404_not_found(message=f"The user ID {user_id} is not registered.")
+
+    return user
