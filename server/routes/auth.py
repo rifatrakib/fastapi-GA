@@ -10,7 +10,8 @@ from fastapi import (
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from server.database.managers import get_cached_data, validate_key
+from server.config.factory import settings
+from server.database.managers import cache_data, pop_from_cache, validate_key
 from server.database.users.auth import (
     activate_user_account,
     authenticate_user,
@@ -28,9 +29,9 @@ from server.schemas.inc.auth import (
 )
 from server.schemas.out.auth import TokenResponseSchema, TokenUser
 from server.security.dependencies import (
+    authenticate_active_user,
     email_form_field,
     get_database_session,
-    is_user_active,
     login_form,
     password_change_request_form,
     password_reset_request_form,
@@ -93,6 +94,7 @@ async def login(
         )
 
         token = create_jwt(user)
+        cache_data(key=token, data=user.dict(), ttl=settings.JWT_MIN)
         return {"access_token": token, "token_type": "Bearer"}
     except HTTPException as e:
         raise e
@@ -109,7 +111,7 @@ async def activate_account(
     validation_key: str = Depends(temporary_url_key),
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
-    user = get_cached_data(key=validation_key)
+    user = pop_from_cache(key=validation_key)
     updated_user = await activate_user_account(session=session, user_id=user["user_id"])
     return {"msg": f"User account {updated_user.username} activated."}
 
@@ -143,7 +145,7 @@ async def resend_activation_key(
     status_code=status.HTTP_200_OK,
 )
 async def change_password(
-    user: TokenUser = Depends(is_user_active),
+    user: TokenUser = Depends(authenticate_active_user),
     payload: PasswordChangeRequestSchema = Depends(password_change_request_form),
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
@@ -200,7 +202,7 @@ async def validate_password_reset_link(
 ):
     try:
         if not validate_key(key=validation_key):
-            raise raise_410_gone(message="Link expired!")
+            raise_410_gone(message="Link expired!")
     except HTTPException as e:
         raise e
 
@@ -218,7 +220,7 @@ async def reset_user_password(
     session: AsyncSession = Depends(get_database_session),
 ):
     try:
-        user = get_cached_data(key=validation_key)
+        user = pop_from_cache(key=validation_key)
         await reset_password(
             session=session,
             account_id=user["account_id"],
@@ -239,7 +241,7 @@ async def reset_user_password(
 async def request_email_change(
     request: Request,
     task_queue: BackgroundTasks,
-    user: TokenUser = Depends(is_user_active),
+    user: TokenUser = Depends(authenticate_active_user),
     new_email: EmailStr = Depends(email_form_field),
 ) -> MessageResponseSchema:
     try:
@@ -272,7 +274,7 @@ async def request_email_change(
 async def validate_email_change_link(validation_key: str = Depends(temporary_url_key)):
     try:
         if not validate_key(key=validation_key):
-            raise raise_410_gone(message="Link expired!")
+            raise_410_gone(message="Link expired!")
     except HTTPException as e:
         raise e
 
@@ -289,7 +291,7 @@ async def change_user_email(
     session: AsyncSession = Depends(get_database_session),
 ):
     try:
-        user = get_cached_data(key=validation_key)
+        user = pop_from_cache(key=validation_key)
         await update_email(
             session=session,
             account_id=user["account_id"],

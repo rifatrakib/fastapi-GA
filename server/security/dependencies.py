@@ -1,10 +1,11 @@
-from fastapi import Depends, Form, HTTPException, Query, status
+from fastapi import Depends, Form, Query
 from fastapi.security import OAuth2PasswordBearer
 from pydantic import EmailStr
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
 from server.config.factory import settings
+from server.database.managers import read_from_cache
 from server.schemas.inc.auth import (
     LoginRequestSchema,
     PasswordChangeRequestSchema,
@@ -12,6 +13,7 @@ from server.schemas.inc.auth import (
 )
 from server.schemas.out.auth import TokenUser
 from server.security.token import decode_jwt
+from server.utils.messages import raise_401_unauthorized, raise_422_unprocessable_entity
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="auth/login")
 
@@ -31,18 +33,20 @@ async def get_database_session() -> AsyncSession:
         await session.close()
 
 
-async def is_user_active(
-    token: str = Depends(oauth2_scheme),
-) -> TokenUser:
+def is_user_active(token: str = Depends(oauth2_scheme)) -> TokenUser:
+    user = read_from_cache(key=token)
+    if user["is_active"]:
+        return token
+
+    raise_401_unauthorized("Inactive user")
+
+
+def authenticate_active_user(token: str = Depends(is_user_active)) -> TokenUser:
     try:
         user_data: TokenUser = decode_jwt(token)
         return user_data
     except ValueError:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-            headers={"WWW-Authenticate": "Bearer"},
-        )
+        raise_401_unauthorized("Invalid token")
 
 
 def temporary_url_key(
@@ -129,10 +133,7 @@ def signup_form(
     repeat_password: str = Depends(repeat_password_form_field),
 ) -> SignupRequestSchema:
     if password != repeat_password:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Passwords do not match.",
-        )
+        raise_422_unprocessable_entity("Passwords do not match.")
     return SignupRequestSchema(username=username, email=email, password=password)
 
 
@@ -149,10 +150,7 @@ def password_change_request_form(
     repeat_password: str = Depends(repeat_password_form_field),
 ) -> PasswordChangeRequestSchema:
     if new_password != repeat_password:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Passwords do not match.",
-        )
+        raise_422_unprocessable_entity("Passwords do not match.")
     return PasswordChangeRequestSchema(current_password=current_password, new_password=new_password)
 
 
@@ -161,8 +159,5 @@ def password_reset_request_form(
     repeat_password: str = Depends(repeat_password_form_field),
 ) -> str:
     if new_password != repeat_password:
-        raise HTTPException(
-            status_code=status.HTTP_422_UNPROCESSABLE_ENTITY,
-            detail="Passwords do not match.",
-        )
+        raise_422_unprocessable_entity("Passwords do not match.")
     return new_password
