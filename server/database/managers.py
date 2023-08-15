@@ -25,6 +25,7 @@ def database_collection_mappers() -> List[MapperSchema]:
             "database_name": "marketplace",
             "model_paths": [
                 "server.models.documents.products.ProductDocument",
+                "server.models.documents.products.ShopDocument",
             ],
         },
     ]
