@@ -66,7 +66,7 @@ async def create_single_product(product: ProductRequest):
 async def update_single_product(product_id: str, product: ProductUpdateRequest):
     try:
         if not product.dict(exclude_unset=True):
-            raise raise_400_bad_request("No fields to update.")
+            raise_400_bad_request("No fields to update.")
         return await update_product_by_id(product_id, product)
     except HTTPException as e:
         raise e
