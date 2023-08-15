@@ -57,14 +57,23 @@ def cache_data(*, key: str, data: Any, ttl: Union[int, None] = None):
     client.set(key, data, ex=ttl)
 
 
-def get_cached_data(*, key: str):
+def read_from_cache(*, key: str):
+    try:
+        client: Redis = get_redis_client()
+        data = json.loads(client.get(key).decode("utf-8"))
+        return data
+    except AttributeError:
+        raise_410_gone(message="Key has expired!")
+
+
+def pop_from_cache(*, key: str):
     try:
         client: Redis = get_redis_client()
         data = json.loads(client.get(key).decode("utf-8"))
         client.delete(key)
         return data
     except AttributeError:
-        raise raise_410_gone(message="Key has expired!")
+        raise_410_gone(message="Key has expired!")
 
 
 def validate_key(*, key: str):
