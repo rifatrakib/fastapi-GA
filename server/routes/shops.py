@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
-from server.database.shops.crud import create_shop, read_shop_by_id
-from server.schemas.inc.products import ShopRequest
+from server.database.shops.crud import create_shop, read_shop_by_id, update_shop
+from server.schemas.inc.products import ShopRequest, ShopUpdateRequest
 from server.schemas.out.products import ShopResponse
 from server.utils.enums import Tags
 
@@ -31,5 +31,18 @@ async def read_single_shop(shop_id: str) -> ShopResponse:
 async def create_new_shop(shop: ShopRequest) -> ShopResponse:
     try:
         return await create_shop(shop)
+    except HTTPException as e:
+        raise e
+
+
+@router.patch(
+    "/{shop_id}",
+    summary="Update shop",
+    description="Update shop",
+    response_model=ShopResponse,
+)
+async def update_single_shop(shop_id: str, shop: ShopUpdateRequest) -> ShopResponse:
+    try:
+        return await update_shop(shop_id, shop)
     except HTTPException as e:
         raise e
