@@ -1,6 +1,11 @@
 from fastapi import APIRouter, HTTPException, status
 
-from server.database.shops.crud import create_shop, read_shop_by_id, update_shop
+from server.database.shops.crud import (
+    create_shop,
+    delete_shop,
+    read_shop_by_id,
+    update_shop,
+)
 from server.schemas.inc.products import ShopRequest, ShopUpdateRequest
 from server.schemas.out.products import ShopResponse
 from server.utils.enums import Tags
@@ -44,5 +49,18 @@ async def create_new_shop(shop: ShopRequest) -> ShopResponse:
 async def update_single_shop(shop_id: str, shop: ShopUpdateRequest) -> ShopResponse:
     try:
         return await update_shop(shop_id, shop)
+    except HTTPException as e:
+        raise e
+
+
+@router.delete(
+    "/{shop_id}",
+    summary="Delete shop",
+    description="Delete shop",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def delete_single_shop(shop_id: str):
+    try:
+        await delete_shop(shop_id)
     except HTTPException as e:
         raise e

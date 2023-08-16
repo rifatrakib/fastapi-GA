@@ -21,3 +21,7 @@ async def update_shop(shop_id: str, shop: ShopRequest) -> ShopDocument:
     existing_shop = await read_shop_by_id(shop_id)
     updated_shop = await ShopDocument(**{**existing_shop.dict(), **shop.dict(exclude_unset=True)}).save()
     return updated_shop
+
+
+async def delete_shop(shop_id: str):
+    await ShopDocument.find_one(ShopDocument.id == PydanticObjectId(shop_id)).delete()
