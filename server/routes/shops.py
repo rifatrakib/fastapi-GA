@@ -1,6 +1,7 @@
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, HTTPException, status
 
-from server.database.shops.crud import read_shop_by_id
+from server.database.shops.crud import create_shop, read_shop_by_id
+from server.schemas.inc.products import ShopRequest
 from server.schemas.out.products import ShopResponse
 from server.utils.enums import Tags
 
@@ -16,5 +17,19 @@ router = APIRouter(prefix="/shops", tags=[Tags.shops])
 async def read_single_shop(shop_id: str) -> ShopResponse:
     try:
         return await read_shop_by_id(shop_id)
+    except HTTPException as e:
+        raise e
+
+
+@router.post(
+    "",
+    summary="Create shop",
+    description="Create shop",
+    response_model=ShopResponse,
+    status_code=status.HTTP_201_CREATED,
+)
+async def create_new_shop(shop: ShopRequest) -> ShopResponse:
+    try:
+        return await create_shop(shop)
     except HTTPException as e:
         raise e
