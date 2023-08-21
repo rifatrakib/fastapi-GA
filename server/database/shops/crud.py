@@ -1,3 +1,5 @@
+from typing import List
+
 from beanie import PydanticObjectId
 
 from server.models.documents.products import ShopDocument
@@ -15,6 +17,11 @@ async def read_shop_by_id(shop_id: str) -> ShopDocument:
     if not shop:
         raise raise_404_not_found("Shop not found")
     return shop
+
+
+async def read_shop_by_owner(owner_id: int) -> List[ShopDocument]:
+    shops = await ShopDocument.find(ShopDocument.owner_id == owner_id).to_list()
+    return shops
 
 
 async def update_shop(shop_id: str, owner_id: int, shop: ShopRequest) -> ShopDocument:

@@ -1,9 +1,12 @@
+from typing import List
+
 from fastapi import APIRouter, Depends, HTTPException, status
 
 from server.database.shops.crud import (
     create_shop,
     delete_shop,
     read_shop_by_id,
+    read_shop_by_owner,
     update_shop,
 )
 from server.schemas.inc.products import ShopRequest, ShopUpdateRequest
@@ -13,6 +16,21 @@ from server.security.dependencies import authenticate_active_user
 from server.utils.enums import Tags
 
 router = APIRouter(prefix="/shops", tags=[Tags.shops])
+
+
+@router.get(
+    "/me",
+    summary="Get own shop",
+    description="Get own shop information",
+    response_model=List[ShopResponse],
+)
+async def read_personal_shop(
+    user: TokenUser = Depends(authenticate_active_user),
+) -> ShopResponse:
+    try:
+        return await read_shop_by_owner(user.id)
+    except HTTPException as e:
+        raise e
 
 
 @router.get(
