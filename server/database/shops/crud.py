@@ -5,8 +5,8 @@ from server.schemas.inc.products import ShopRequest
 from server.utils.messages import raise_404_not_found
 
 
-async def create_shop(shop: ShopRequest) -> ShopDocument:
-    shop = await ShopDocument.insert_one(ShopDocument(**shop.dict()))
+async def create_shop(shop: ShopRequest, owner_id: int) -> ShopDocument:
+    shop = await ShopDocument.insert_one(ShopDocument(**shop.dict(), owner_id=owner_id))
     return shop
 
 
@@ -17,11 +17,15 @@ async def read_shop_by_id(shop_id: str) -> ShopDocument:
     return shop
 
 
-async def update_shop(shop_id: str, shop: ShopRequest) -> ShopDocument:
-    existing_shop = await read_shop_by_id(shop_id)
+async def update_shop(shop_id: str, owner_id: int, shop: ShopRequest) -> ShopDocument:
+    existing_shop = await ShopDocument.find_one(
+        ShopDocument.id == PydanticObjectId(shop_id), ShopDocument.owner_id == owner_id
+    )
     updated_shop = await ShopDocument(**{**existing_shop.dict(), **shop.dict(exclude_unset=True)}).save()
     return updated_shop
 
 
-async def delete_shop(shop_id: str):
-    await ShopDocument.find_one(ShopDocument.id == PydanticObjectId(shop_id)).delete()
+async def delete_shop(shop_id: str, owner_id: int):
+    await ShopDocument.find_one(
+        ShopDocument.id == PydanticObjectId(shop_id), ShopDocument.owner_id == owner_id
+    ).delete()

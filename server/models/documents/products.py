@@ -11,7 +11,7 @@ class ProductDocument(BaseDocumentModel, ProductBase):
 
 
 class ShopDocument(BaseDocumentModel, ShopBase):
-    owner_id: str
+    owner_id: int
 
     class Settings:
         name = "shops"

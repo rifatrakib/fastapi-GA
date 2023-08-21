@@ -6,12 +6,9 @@ from server.schemas.common.products import ProductBase, ShopBase
 
 
 class ProductRequest(ProductBase):
-    shop_id: str = Field(..., title="Shop ID")
-
     class Config:
         schema_extra = {
             "example": {
-                "shop_id": "5f9d7a9b9c6f6c0a9c9b9c6f",
                 "name": "Product name",
                 "brand": "Product brand",
                 "model": "Product model",
@@ -49,12 +46,9 @@ class ProductUpdateRequest(ProductBase):
 
 
 class ShopRequest(ShopBase):
-    owner_id: str = Field(..., title="Owner ID")
-
     class Config:
         schema_extra = {
             "example": {
-                "owner_id": "5f9d7a9b9c6f6c0a9c9b9c6f",
                 "name": "Shop name",
                 "address": "Shop address",
                 "phone_numbers": ["+380123456789", "+380987654321"],

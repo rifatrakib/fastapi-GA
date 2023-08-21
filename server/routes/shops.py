@@ -1,4 +1,4 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
 
 from server.database.shops.crud import (
     create_shop,
@@ -7,7 +7,9 @@ from server.database.shops.crud import (
     update_shop,
 )
 from server.schemas.inc.products import ShopRequest, ShopUpdateRequest
+from server.schemas.out.auth import TokenUser
 from server.schemas.out.products import ShopResponse
+from server.security.dependencies import authenticate_active_user
 from server.utils.enums import Tags
 
 router = APIRouter(prefix="/shops", tags=[Tags.shops])
@@ -18,6 +20,7 @@ router = APIRouter(prefix="/shops", tags=[Tags.shops])
     summary="Get shop by id",
     description="Get shop by id",
     response_model=ShopResponse,
+    dependencies=[Depends(authenticate_active_user)],
 )
 async def read_single_shop(shop_id: str) -> ShopResponse:
     try:
@@ -33,9 +36,12 @@ async def read_single_shop(shop_id: str) -> ShopResponse:
     response_model=ShopResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_new_shop(shop: ShopRequest) -> ShopResponse:
+async def create_new_shop(
+    shop: ShopRequest,
+    user: TokenUser = Depends(authenticate_active_user),
+) -> ShopResponse:
     try:
-        return await create_shop(shop)
+        return await create_shop(shop, user.id)
     except HTTPException as e:
         raise e
 
@@ -46,9 +52,13 @@ async def create_new_shop(shop: ShopRequest) -> ShopResponse:
     description="Update shop",
     response_model=ShopResponse,
 )
-async def update_single_shop(shop_id: str, shop: ShopUpdateRequest) -> ShopResponse:
+async def update_single_shop(
+    shop_id: str,
+    shop: ShopUpdateRequest,
+    user: TokenUser = Depends(authenticate_active_user),
+) -> ShopResponse:
     try:
-        return await update_shop(shop_id, shop)
+        return await update_shop(shop_id, user.id, shop)
     except HTTPException as e:
         raise e
 
@@ -59,8 +69,12 @@ async def update_single_shop(shop_id: str, shop: ShopUpdateRequest) -> ShopRespo
     description="Delete shop",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-async def delete_single_shop(shop_id: str):
+async def delete_single_shop(
+    shop_id: str,
+    user: TokenUser = Depends(authenticate_active_user),
+):
     try:
-        await delete_shop(shop_id)
+        print(shop_id, user.id)
+        await delete_shop(shop_id, user.id)
     except HTTPException as e:
         raise e
