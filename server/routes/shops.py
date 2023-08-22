@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Union
 
 from fastapi import APIRouter, Depends, HTTPException, Query, status
 
@@ -7,6 +7,7 @@ from server.database.shops.crud import (
     delete_shop,
     read_shop_by_id,
     read_shop_by_owner,
+    search_shops_by_name,
     update_shop,
 )
 from server.schemas.inc.products import ShopRequest, ShopUpdateRequest
@@ -44,6 +45,23 @@ async def read_personal_shop(
 async def read_single_shop(shop_id: str) -> ShopResponse:
     try:
         return await read_shop_by_id(shop_id)
+    except HTTPException as e:
+        raise e
+
+
+@router.get(
+    "",
+    summary="Search shops",
+    description="Search shops",
+    response_model=List[ShopResponse],
+    dependencies=[Depends(authenticate_active_user)],
+)
+async def search_shops(
+    name: Union[str, None] = Query(default=None, title="Search query", description="Search query"),
+    page: int = Query(default=1, ge=1, title="Page number", description="Page number"),
+) -> List[ShopResponse]:
+    try:
+        return await search_shops_by_name(name, page)
     except HTTPException as e:
         raise e
 

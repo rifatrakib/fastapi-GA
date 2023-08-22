@@ -1,6 +1,7 @@
 from typing import List
 
 from beanie import PydanticObjectId
+from beanie.odm.operators.find.evaluation import Text
 
 from server.models.documents.products import ShopDocument
 from server.schemas.inc.products import ShopRequest
@@ -27,6 +28,11 @@ async def read_shop_by_owner(owner_id: int, page: int, limit: int = 10) -> List[
         .limit(limit)
         .to_list()
     )
+    return shops
+
+
+async def search_shops_by_name(name: str, page: int, limit: int = 10) -> List[ShopDocument]:
+    shops = await ShopDocument.find(Text(name)).sort(+ShopDocument.name).skip((page - 1) * limit).limit(limit).to_list()
     return shops
 
 
