@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from server.database.shops.crud import (
     create_shop,
@@ -25,10 +25,11 @@ router = APIRouter(prefix="/shops", tags=[Tags.shops])
     response_model=List[ShopResponse],
 )
 async def read_personal_shop(
+    page: int = Query(default=1, ge=1, title="Page number", description="Page number"),
     user: TokenUser = Depends(authenticate_active_user),
 ) -> ShopResponse:
     try:
-        return await read_shop_by_owner(user.id)
+        return await read_shop_by_owner(user.id, page)
     except HTTPException as e:
         raise e
 
@@ -92,7 +93,6 @@ async def delete_single_shop(
     user: TokenUser = Depends(authenticate_active_user),
 ):
     try:
-        print(shop_id, user.id)
         await delete_shop(shop_id, user.id)
     except HTTPException as e:
         raise e

@@ -19,8 +19,14 @@ async def read_shop_by_id(shop_id: str) -> ShopDocument:
     return shop
 
 
-async def read_shop_by_owner(owner_id: int) -> List[ShopDocument]:
-    shops = await ShopDocument.find(ShopDocument.owner_id == owner_id).to_list()
+async def read_shop_by_owner(owner_id: int, page: int, limit: int = 10) -> List[ShopDocument]:
+    shops = (
+        await ShopDocument.find(ShopDocument.owner_id == owner_id)
+        .sort(+ShopDocument.name)
+        .skip((page - 1) * limit)
+        .limit(limit)
+        .to_list()
+    )
     return shops
 
 
