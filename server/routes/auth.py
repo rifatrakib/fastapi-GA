@@ -94,7 +94,7 @@ async def login(
         )
 
         token = create_jwt(user)
-        cache_data(key=token, data=user.dict(), ttl=settings.JWT_MIN)
+        cache_data(key=token, data=user.json(), ttl=settings.JWT_MIN * 60)
         return {"access_token": token, "token_type": "Bearer"}
     except HTTPException as e:
         raise e
@@ -112,7 +112,7 @@ async def activate_account(
     session: AsyncSession = Depends(get_database_session),
 ) -> MessageResponseSchema:
     user = pop_from_cache(key=validation_key)
-    updated_user = await activate_user_account(session=session, user_id=user["user_id"])
+    updated_user = await activate_user_account(session=session, user_id=user["id"])
     return {"msg": f"User account {updated_user.username} activated."}
 
 

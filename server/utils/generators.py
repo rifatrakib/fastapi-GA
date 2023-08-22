@@ -12,7 +12,7 @@ def create_temporary_activation_url(
     user: UserAccount, url: HttpUrl, extras: Union[Dict[str, Any], None] = None
 ) -> HttpUrl:
     key = str(uuid4())
-    data = user.dict()
+    data = json.loads(user.json())
 
     if extras:
         data.update(**extras)

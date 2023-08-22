@@ -1,3 +1,5 @@
+from pymongo import TEXT
+
 from server.models.base import BaseDocumentModel
 from server.schemas.common.products import ProductBase, ShopBase
 
@@ -7,12 +9,18 @@ class ProductDocument(BaseDocumentModel, ProductBase):
 
     class Settings:
         name = "products"
-        indexes = ["name", "shop_id"]
+        indexes = [
+            "shop_id",
+            [("name", TEXT)],
+        ]
 
 
 class ShopDocument(BaseDocumentModel, ShopBase):
-    owner_id: str
+    owner_id: int
 
     class Settings:
         name = "shops"
-        indexes = ["name", "owner_id"]
+        indexes = [
+            "owner_id",
+            [("name", TEXT)],
+        ]
