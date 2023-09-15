@@ -1,15 +1,25 @@
 from typing import List
 
 from beanie import PydanticObjectId
+from fastapi import HTTPException
 
+from server.database.shops.crud import read_shop_by_id
 from server.models.documents.products import ProductDocument
 from server.schemas.inc.products import ProductRequest
-from server.utils.messages import raise_404_not_found
+from server.utils.messages import raise_403_forbidden, raise_404_not_found
 
 
-async def create_product(product: ProductRequest) -> ProductDocument:
-    product = await ProductDocument.insert_one(ProductDocument(**product.dict()))
-    return product
+async def create_product(product: ProductRequest, owner_id: int) -> ProductDocument:
+    try:
+        shop = await read_shop_by_id(product.shop_id)
+        if shop.owner_id != owner_id:
+            raise_403_forbidden("You are not the owner of this shop")
+
+        product = ProductDocument(**product.dict(), shop=shop)
+        await ProductDocument.insert_one(product)
+        return product
+    except HTTPException as e:
+        raise e
 
 
 async def read_product_by_id(product_id: str) -> ProductDocument:
