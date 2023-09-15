@@ -6,9 +6,12 @@ from server.schemas.common.products import ProductBase, ShopBase
 
 
 class ProductRequest(ProductBase):
+    shop_id: str = Field(..., title="Shop ID")
+
     class Config:
         schema_extra = {
             "example": {
+                "shop_id": "5f9d7a9b9b3f4c1e9c3e8e3e",
                 "name": "Product name",
                 "brand": "Product brand",
                 "model": "Product model",
