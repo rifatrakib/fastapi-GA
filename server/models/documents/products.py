@@ -4,17 +4,6 @@ from server.models.base import BaseDocumentModel
 from server.schemas.common.products import ProductBase, ShopBase
 
 
-class ProductDocument(BaseDocumentModel, ProductBase):
-    shop_id: str
-
-    class Settings:
-        name = "products"
-        indexes = [
-            "shop_id",
-            [("name", TEXT)],
-        ]
-
-
 class ShopDocument(BaseDocumentModel, ShopBase):
     owner_id: int
 
@@ -22,5 +11,15 @@ class ShopDocument(BaseDocumentModel, ShopBase):
         name = "shops"
         indexes = [
             "owner_id",
+            [("name", TEXT)],
+        ]
+
+
+class ProductDocument(BaseDocumentModel, ProductBase):
+    shop: ShopDocument
+
+    class Settings:
+        name = "products"
+        indexes = [
             [("name", TEXT)],
         ]

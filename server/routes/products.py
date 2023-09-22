@@ -1,6 +1,6 @@
 from typing import List
 
-from fastapi import APIRouter, HTTPException, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 
 from server.database.products.crud import (
     create_product,
@@ -10,7 +10,9 @@ from server.database.products.crud import (
     update_product_by_id,
 )
 from server.schemas.inc.products import ProductRequest, ProductUpdateRequest
+from server.schemas.out.auth import TokenUser
 from server.schemas.out.products import ProductResponse
+from server.security.dependencies import authenticate_active_user
 from server.utils.enums import Tags
 from server.utils.messages import raise_400_bad_request
 
@@ -50,9 +52,12 @@ async def paginate_products(page: int = Query(1, ge=1)):
     response_model=ProductResponse,
     status_code=status.HTTP_201_CREATED,
 )
-async def create_single_product(product: ProductRequest):
+async def create_single_product(
+    product: ProductRequest,
+    user: TokenUser = Depends(authenticate_active_user),
+):
     try:
-        return await create_product(product)
+        return await create_product(product, user.id)
     except HTTPException as e:
         raise e
 
